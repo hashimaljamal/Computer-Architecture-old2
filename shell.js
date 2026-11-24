@@ -76,7 +76,7 @@
     render: function (box, opts) {
       opts = opts || {};
       var withPractice = {};
-      Object.keys(C().PRACTICE).forEach(function (k) { if (parts[k] || lessons.some(function (l) { return l.id === k; })) withPractice[C().PRACTICE[k]] = true; });
+      Object.keys(C().PRACTICE).forEach(function (k) { if (parts[k] || lessons.some(function (l) { return l.id === k; })) topicsOf(k).forEach(function (t) { withPractice[t] = true; }); });
       var p = Filter.preset();
       var h = '<div class="fx"><span class="fxl">Exam</span><div class="fxb">' +
         '<button type="button" class="pb qbtn' + (p === 'all' ? ' on' : '') + '" data-fexam="all">All</button>' +
@@ -136,8 +136,13 @@
   }
 
   /* ---------- tabs and panels ---------- */
-  function topicOf(id) { return C().PRACTICE[id]; }
-  function visible(l) { return l.section === 'practice' && Filter.has(topicOf(l.id)); }
+  // the lectures a practice tab belongs to (a tab with none is always shown)
+  function topicsOf(id) { var t = C().PRACTICE[id]; return t ? [].concat(t) : []; }
+  function visible(l) {
+    if (l.section !== 'practice') return false;
+    var t = topicsOf(l.id);
+    return !t.length || t.some(function (x) { return enabled[x]; });
+  }
 
   function addTab(lesson) {
     var panel = document.createElement('section');

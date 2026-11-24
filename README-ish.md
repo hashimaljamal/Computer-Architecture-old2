@@ -10,8 +10,16 @@ The switch at the top moves between **Practice problems** (the tabs below) and *
 
 - **Filter**: in Practice problems, the button at the right of the tabs; in Lessons, the panel on the left. Both are the same filter: **All**, **Mid 1**, **Mid 2**, **Final**, or switch single lessons on and off. The choice is remembered in the browser. Practice tabs whose lesson is switched off are hidden; lessons that have no practice problems yet are marked "(no problems yet)".
 - **Which lesson is on which exam** lives in `curriculum.js`: edit it to change the exam buttons, rename a lecture, or link a practice tab to a lesson.
-- **Lessons page**: each lesson has its exam badges and a button to its practice problems; the contents list on the left jumps to any section and follows your reading. Lessons whose lecture slides have not been added yet are listed at the top. Until a lecture's own content is added, a lesson that has a practice tab shows that tab's lesson guide. Links such as `#lessons/cache` open the page at that lesson.
-- Lecture content goes in `lessons/lectures/`: a file that calls `Lectures.register('<lesson id>', function () { return '<h3>...</h3>...'; })`, listed in `index.html` after `lectures.js`.
+- **Lessons page**: all 15 lectures (L1 to L15) as one scrolling page. Each lecture has its exam badges, a button to its practice problems, worked examples, diagrams and "Try it" demos. The contents list on the left jumps to any section and follows your reading. Links such as `#lessons/l12` open the page at that lecture.
+- **Try it demos** (in `lessons/lectures/widgets.js`): a memory chip (L1), fetch/decode/execute (L2), an LC-3 simulator that steps the lecture programs (L5 to L7), pipeline timing (L8), hazards with and without forwarding (L9), the five-stage datapath (L10), a cache simulator (L12), PWM (L13) and the textbook ALU (L15).
+- Lecture content goes in `lessons/lectures/content-*.js`: each calls `Lectures.register('<lesson id>', function () { return '<h3>...</h3>...'; }, init)`, using the helpers in `kit.js`.
+
+| Exam | Lectures |
+|---|---|
+| Mid 1 | L1 to L6 |
+| Mid 2 | L2 (instruction set encoding), L8 to L10 (pipelining), L11 (memory system design), L12 (cache) |
+| Final | L6, L7 (LC-3 assembly), L11, L12, L13 (I/O, including parity), L15 (ALU) |
+| none | L14 (parallel processing and multicore) |
 
 ## Lessons
 
@@ -191,6 +199,12 @@ lessons/
   lectures/
     lectures.js                the Lessons section: one scrolling page with the filter and contents
     lectures.css               its styles
+    sims.js                    LC-3 simulator, pipeline, hazard, cache and ALU models behind the demos (no page code)
+    kit.js                     helpers for writing lecture content: tables, figures, code, block diagrams
+    widgets.js                 the "Try it" demos
+    content-mid1.js            Lectures 1 to 7
+    content-mid2.js            Lectures 8 to 10
+    content-final.js           Lectures 11 to 15
   cache/
     cache.js                   the lesson's page (builds its panel)
     cache.css                  the lesson's styles
@@ -208,6 +222,7 @@ tests/
   pipelining.test.js           tests for the Pipelining lesson
   cache.test.js                tests for the Cache lesson
   io-multicore.test.js         tests for the I/O, Multicore & ALU lesson
+  lectures.test.js             every lecture builds; the simulators reproduce the lectures' numbers
 test.js                        runs every tests/*.test.js
 .github/workflows/test.yml     runs the tests on every push
 ```

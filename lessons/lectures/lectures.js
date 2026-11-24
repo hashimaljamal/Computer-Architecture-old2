@@ -12,7 +12,11 @@
   'use strict';
 
   var content = {};
-  window.Lectures = { register: function (topic, fn) { content[topic] = fn; }, has: function (topic) { return !!content[topic]; } };
+  // register(topic, html function, optional init(articleElement) to wire up interactive pieces)
+  window.Lectures = {
+    register: function (topic, fn, init) { content[topic] = { html: fn, init: init }; },
+    has: function (topic) { return !!content[topic]; }
+  };
 
   // practice tab -> the class its pictures are styled with
   var STYLE = { 'lc3-encoding': 'lesson-lc3', 'pipelining': 'lesson-pipe', 'memory-design': 'lesson-memory', 'cache': 'lesson-cache',
@@ -20,16 +24,18 @@
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function C() { return window.Curriculum; }
-  function practiceFor(topic) { var P = C().PRACTICE; return Object.keys(P).filter(function (k) { return P[k] === topic; })[0] || null; }
+  // the practice tabs that go with a lecture
+  function practiceFor(topic) { var P = C().PRACTICE; return Object.keys(P).filter(function (k) { return [].concat(P[k]).indexOf(topic) >= 0; }); }
+  function tabTitle(id) { var l = Lessons.list().filter(function (x) { return x.id === id; })[0]; return l ? l.title : id; }
 
   var built = {};
   function lessonHtml(topic) {
     if (built[topic] !== undefined) return built[topic];
     var html = null, cls = '';
     try {
-      if (content[topic]) html = content[topic]();
+      if (content[topic]) html = content[topic].html();
       else {
-        var tab = practiceFor(topic);
+        var tab = practiceFor(topic)[0];
         if (tab && window.Guide && Guide.has(tab)) { html = Guide.html(tab); cls = STYLE[tab] || ''; }
       }
     } catch (err) { console.error(err); html = '<p class="err">This lesson could not be shown.</p>'; }
@@ -73,13 +79,20 @@
           '. These lectures will appear here once their slides are added.</div>';
       }
       shown.forEach(function (s, i) {
-        var t = s.t, tab = practiceFor(t.id);
+        var t = s.t, tabs = practiceFor(t.id);
         var badges = t.exams.map(function (x) { var e = C().EXAMS.filter(function (y) { return y.id === x; })[0]; return e ? '<span class="lp-badge">' + e.title + '</span>' : ''; }).join('');
         h += '<article class="lp-lesson" id="lec-' + t.id + '"><header class="lp-head"><h2>' + esc(t.title) + '</h2><div class="lp-meta">' + badges +
-          (tab ? '<a class="pb lp-go" href="#' + tab + '">Practice problems →</a>' : '') + '</div></header>' +
+          tabs.map(function (tab) { return '<a class="pb lp-go" href="#' + tab + '">Practice: ' + esc(tabTitle(tab)) + ' \u2192</a>'; }).join('') + '</div></header>' +
           '<div class="gtext ' + s.c.cls + '">' + s.c.html + '</div></article>';
       });
       O('body').innerHTML = h;
+      // wire up the interactive pieces of each lecture
+      shown.forEach(function (s) {
+        var c = content[s.t.id];
+        if (c && typeof c.init === 'function') {
+          try { c.init(O('body').querySelector('#lec-' + s.t.id)); } catch (err) { console.error(err); }
+        }
+      });
       // number the headings for the contents list and links
       var toc = '';
       shown.forEach(function (s) {
